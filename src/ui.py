@@ -1,12 +1,5 @@
 from datetime import datetime
 
-def validar_rango(valor, minimo, maximo, nombre_variable):
-    """Verifica si un valor está dentro de un rango lógico."""
-    if minimo <= valor <= maximo:
-        return True
-    else:
-        print(f"⚠️ Error: {nombre_variable} debe estar entre {minimo} y {maximo}.")
-        return False
 
 def solicitar_numero(mensaje, minimo, maximo, nombre_variable):
     """Pide un número y no para hasta que sea válido y esté en rango."""
