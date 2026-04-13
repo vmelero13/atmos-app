@@ -1,9 +1,10 @@
-import json
 import os
+import json
 from typing import List, Dict, Any
 
-# Ruta al archivo de datos
-DATA_PATH = os.path.join("data", "data.json")
+# Ruta al archivo json
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_PATH = os.path.join(BASE_DIR, "..", "data", "data.json")
 
 def cargar_datos() -> List[Dict[str, Any]]:
     """
