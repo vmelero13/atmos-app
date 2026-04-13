@@ -85,7 +85,7 @@ def consultar_por_zona() -> None:
             imprimir_encabezado_h2("CONSULTA DE REGISTROS POR ZONA")
             
             datos = io.cargar_datos()
-            zona_busqueda = ui.solicitar_zona("Zona/Distrito a consultar")
+            zona_busqueda = ui.solicitar_zona("Zona/Distrito a consultar: ")
             
             # Filtramos los datos (convertimos a minúsculas para comparar sin errores)
             resultados = [r for r in datos if r["zona_registro"].lower() == zona_busqueda.lower()]

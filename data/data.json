@@ -1,0 +1,12 @@
+[
+    {
+        "fecha_registro": "2026-04-13",
+        "zona_registro": "sur",
+        "temperatura": 1.0,
+        "humedad_nivel": 1.0,
+        "viento_velocidad": 1.0,
+        "alerta_temperatura": false,
+        "alerta_viento": false,
+        "alerta_humedad": true
+    }
+]
