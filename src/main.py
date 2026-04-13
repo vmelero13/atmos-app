@@ -48,7 +48,6 @@ def ejecutar_registro() -> None:
                     break
                 else:
                     # 4. Guardar registro (I/O)
-                    del alertas["mensajes"]
                     registro.update(alertas)
 
                     print("\n💾 Guardando datos...")
@@ -95,7 +94,13 @@ def consultar_por_zona() -> None:
                 print(f"\n🔍 Se han encontrado {len(resultados)} registros en la zona {zona_busqueda.upper()}:")
                 print("-" * 50)
                 for r in resultados:
-                    print(f"📅 {r['fecha_registro']} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h")
+                    print(f"📅 {r['fecha_registro']} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h\n")
+                    if r.get("mensajes"):
+                        print(f"⚠️ Alertas:")
+                        for alerta in r["mensajes"]:
+                            print(f"      - {alerta}")
+                    else:
+                        print("Sin Alertas.\n")
             else:
                 print(f"\nℹ️  No se encontraron registros para la zona {zona_busqueda.upper()}")
 
