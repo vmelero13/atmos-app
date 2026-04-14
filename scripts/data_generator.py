@@ -5,7 +5,6 @@ import random
 # 1. Generar datos aleatorios
 from datetime import timedelta, datetime
 
-d=0
 inicio = datetime(2000, 1, 1)
 fin = datetime.now()
 def fecha_aleatoria(inicio, fin):
@@ -14,10 +13,18 @@ def fecha_aleatoria(inicio, fin):
     fecha = inicio + timedelta(days=dias)
     return fecha.strftime("%Y-%m-%d")
 
-while d < 101:
-  datos_aleatorios = {
-    	"fecha_registro": fecha_aleatoria(inicio, fin),
-    	"zona_registro": random.choice(["norte", "sur", "centro"]),
+datos = []
+combinaciones_usadas = set()
+while len(datos) < 100:
+  ## Evitar combinaciones repetidas de fecha y zona
+  fecha = fecha_aleatoria(inicio, fin)
+  zona = random.choice(["norte", "sur", "centro"])
+  clave = (fecha, zona) #Combinación única de fecha y zona
+  if clave not in combinaciones_usadas: 
+    combinaciones_usadas.add(clave)
+    datos_aleatorios = {
+    	"fecha_registro": fecha,
+    	"zona_registro": zona,
     	"temperatura": random.uniform(-15, 50),
     	"humedad_nivel": random.uniform(0, 100),
     	"viento_velocidad": random.uniform(0, 130),
@@ -26,11 +33,8 @@ while d < 101:
 	    "alerta_viento": random.choice([True, False])
 }
 
-# 2. Convertir a formato JSON (cadena de texto)
-  json_string = json.dumps(datos_aleatorios, indent=4) # indent=4 para legibilidad
-  print(json_string)
+    datos.append(datos_aleatorios)
 
-# 3. Guardar en un archivo con permisos de escritura (w)
-  with open('datos_aleatorios.json', 'w') as f:
-    json.dump(datos_aleatorios, f, indent=4)
-  d = d+1
+# 3. Guardar todos los datos generados en un archivo con permisos de escritura (w)
+with open('datos_aleatorios.json', 'w') as f:
+    json.dump(datos, f, indent=4)
