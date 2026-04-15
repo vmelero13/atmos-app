@@ -1,7 +1,7 @@
 import sys
 import time
 import ui
-from utils import limpiar_pantalla, imprimir_encabezado_h2
+from utils import limpiar_pantalla, imprimir_encabezado_h2, formatear_texto
 from validation import validar_zona_registro, validar_duplicado, validar_fecha_registro
 from alerts import evaluar_alerta
 import io_manager as io
@@ -103,7 +103,7 @@ def ejecutar_registro() -> None:
     if alertas["mensajes"]:
         log_warning(f"Alertas meteorológicas detectadas para {zona}: {alertas['mensajes']}")
         for alerta in alertas["mensajes"]:
-            print(f"⚠️  ALERTA: {alerta}")
+            print(f"⚠️  {formatear_texto('Alerta')}: {alerta}")
     
     opcion = ui.mostrar_confirmacion()
     while True:
@@ -115,7 +115,7 @@ def ejecutar_registro() -> None:
                 
                 if not es_unico:
                     log_warning(f"Intento de registro duplicado bloqueado: Zona '{zona}', Fecha {fecha}")
-                    print(f"\n⚠️  AVISO: Ya existe una medición para la zona '{zona}' en la fecha {fecha}.")
+                    print(f"\n⚠️  {formatear_texto('AVISO', "amarillo")}: Ya existe una medición para la zona '{zona}' en la fecha {fecha}.")
                     print("No se ha guardado el registro para evitar datos repetidos.")
                     break
                 else:
@@ -170,24 +170,32 @@ def consultar_por_zona() -> None:
             resultados = [r for r in datos if r["zona_registro"].lower() == zona_busqueda.lower()]
 
             if resultados:
-                print(f"\n🔍 Se ha(n) encontrado {len(resultados)} registros en la zona {zona_busqueda.upper()}:")
-                log_info(f"Resultados encontrados para {zona_busqueda}: {len(resultados)}")
+                num_resultados = len(resultados)
+                zona = formatear_texto(zona_busqueda.upper(), "verde")
+                if num_resultados == 1:
+                    print(f"\n🔍 Se ha encontrado 1 registro en la zona {zona}:")
+                else:
+                    print(f"\n🔍 Se han encontrado {num_resultados} registros en la zona {zona}:")
+                
+                log_info(f"Resultados encontrados para {zona_busqueda}: {num_resultados}")
+                
                 print("-" * 50)
                 for r in resultados:
-                    print(f"📅 {r['fecha_registro']} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h\n")
+                    print(f"📅 {r['fecha_registro']} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h")
                     if r.get("mensajes"):
-                        print(f"⚠️ Alertas:")
+                        print(f"   ⚠️ {formatear_texto('Alertas')}:")
                         for alerta in r["mensajes"]:
-                            print(f"      - {alerta}")
+                            print(f"        - {alerta}")
+                        print("\n")
                     else:
                         print("Sin Alertas.\n")
             else:
-                print(f"\nℹ️  No se encontraron registros para la zona {zona_busqueda.upper()}")
+                print(f"\nℹ️  No se encontraron registros para la zona {zona}")
 
             # Preguntar al usuario qué desea hacer a continuación
             opcion = ui.mostrar_submenu_consultas()
             
-            if opcion == "2":
+            if opcion == "X":
                 break # Sale del bucle de consulta y vuelve al menú principal
             elif opcion != "1":
                 print(f"\n⚠️  {opcion} no es una opción válida.")
@@ -198,7 +206,6 @@ def consultar_por_zona() -> None:
             return 
 
 def ver_historico():
-    import io_manager as io
     datos = io.cargar_datos()
 
     if not datos:
@@ -382,4 +389,4 @@ if __name__ == "__main__":
         pass
     except Exception as e:
         log_critico(f"ERROR CRÍTICO NO CONTROLADO: {str(e)}")
-        print(f"\n❌ Error crítico inesperado: {e}")
+        print(f"\n❌ {formatear_texto('Error crítico')} inesperado: {e}")
