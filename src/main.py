@@ -1,9 +1,8 @@
-
 import sys
 import time
 import ui
 from utils import limpiar_pantalla, imprimir_encabezado_h2
-from validation import validar_zona_registro, validar_duplicado
+from validation import validar_zona_registro, validar_duplicado, validar_fecha_registro
 from alerts import evaluar_alerta
 import io_manager as io
 from logger import configurar_logger, log_info, log_warning, log_error, log_critico
@@ -198,6 +197,129 @@ def consultar_por_zona() -> None:
             print("\n\n⚠️  Operación cancelada por el usuario.")
             return 
 
+def ver_historico():
+    import io_manager as io
+    datos = io.cargar_datos()
+
+    if not datos:
+        print("\n⚠️ No existe datos registrados en el sistema")
+        return
+    
+    #Opcion filtrar por fechas
+    while True:
+        print("\n---FILTRAR FECHAS---")
+        finicio = input("Fecha inicio (YYYY-MM-DD, Enter para ver todo): ").strip()
+        ffin = input("Fecha fin (YYYY-MM-DD, Enter para todo): ").strip()
+
+        #Validar filtro fechas
+        if finicio == "" and ffin == "":
+            finicio = "0000-01-01"
+            ffin = "9999-12-31"
+        else:
+            if finicio != "" and not validar_fecha_registro(finicio):
+                print("\nFecha de inicio no válida")
+                print("Reintentando...")
+                time.sleep(2)
+                continue
+                
+            if ffin != "" and not validar_fecha_registro(ffin):
+                print("\nFecha de fin no válida")
+                print("Reintentando...")
+                time.sleep(2)
+                continue
+
+            if finicio == "":
+                finicio = "0000-01-01"
+
+            if ffin == "":
+                ffin = "9999-12-31"
+        
+            if finicio > ffin:
+                print("\nFecha de inicio no puede ser mayor que fecha fin.")
+                print("Reintentando...")
+                time.sleep(2)
+                continue
+
+        datos_filtrados = [
+        r for r in datos
+        if finicio <= r["fecha_registro"] <= ffin
+        ]
+
+        if not datos_filtrados:
+            print("\nNo hay registros en las fechas indicadas.\n")
+        
+            reintentar = False
+
+            while True:
+                print("\n---Opciones---")
+                print("[1] Volver a introducir fechas")
+                print("[X] Volver al menú principal")
+
+                option = input("Seleccione opción: ").strip().upper()
+                if option == "1":
+                    reintentar = True
+                    break
+                elif option == "X":
+                    return
+                else:
+                    print(" La opción seleccionada no es válida.")
+            if reintentar:
+                continue
+        break
+
+    datos_ordenados=sorted(datos_filtrados, key=lambda r:r["fecha_registro"])
+
+    indice=0
+    size=10
+    paginas=(len(datos_ordenados)-1)//size+1
+    cambio_pagina = True
+
+    while True:
+
+        if cambio_pagina:
+            inicio = indice * size
+            fin = inicio + size
+            bloque = datos_ordenados[inicio:fin]
+
+            print("\n HISTORICO (Pag: {}/{}):".format(indice+1, paginas))
+            print("-"*50)
+
+            for r in bloque:
+                print(f"📅 {r['fecha_registro']} | 🌡️  {r['temperatura']}°C | 💧 {r['humedad_nivel']}% | 💨 {r['viento_velocidad']} km/h\n")
+                if r.get("mensajes"):
+                            print(f"⚠️ Alertas:")
+                            for alerta in r["mensajes"]:
+                                print(f"      - {alerta}")
+                else:
+                    print("Sin Alertas.\n")
+
+        cambio_pagina = False
+
+        print("\nOpciones:")
+        print("[1] Siguiente página")
+        print("[2] Página anterior")
+        print("[X] Salir")
+
+        opcion = input("Seleccione una opción: ").strip().upper()
+
+        if opcion == "1":
+            if indice < paginas - 1:
+                indice += 1
+                cambio_pagina = True
+            else:
+                print("\nEstás en la última página.")
+        elif opcion == "2":
+            if indice > 0:
+                indice -= 1
+                cambio_pagina = True
+            else:
+                print("\nEstás en la primera página.")
+        elif opcion == "X":
+            break
+        else:
+            print("\nOpción no válida.")
+
+            
 def iniciar_aplicacion() -> None:
     """
     Punto de entrada principal que mantiene el bucle de ejecución de la App.
@@ -223,7 +345,11 @@ def iniciar_aplicacion() -> None:
             log_info("Navegando a: Consulta por zona")
             consultar_por_zona()
             input("\nPresione Enter para continuar...")
-
+            
+        elif opcion == "3":
+            log_info("Navegando a: Histórico de registros")
+            ver_historico()
+            
         elif opcion == "X":
             log_info("Cierre de aplicación solicitado por el usuario.")
             ui.transicion_despedida()
@@ -235,12 +361,12 @@ def iniciar_aplicacion() -> None:
             input("\nPresione Enter para intentarlo de nuevo...")
 
 if __name__ == "__main__":
+    # Configurar el logger al arrancar
     configurar_logger()
     log_info("--- SESIÓN INICIADA: Sistema Atmos arrancado correctamente ---")
-
+    
     try:
         ui.transicion_bienvenida()
-
         acceso_concedido = menu_acceso()
 
         if acceso_concedido:
@@ -248,16 +374,12 @@ if __name__ == "__main__":
         else:
             ui.transicion_despedida()
             sys.exit()
-
     except KeyboardInterrupt:
         log_info("Cierre forzado de la aplicación (Ctrl+C).")
         ui.transicion_despedida()
         sys.exit()
-
     except EOFError:
         pass
-
     except Exception as e:
         log_critico(f"ERROR CRÍTICO NO CONTROLADO: {str(e)}")
         print(f"\n❌ Error crítico inesperado: {e}")
-
