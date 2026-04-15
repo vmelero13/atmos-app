@@ -260,4 +260,5 @@ if __name__ == "__main__":
     except Exception as e:
         log_critico(f"ERROR CRÍTICO NO CONTROLADO: {str(e)}")
         print(f"\n❌ Error crítico inesperado: {e}")
+# a ver si acaba de subirse
 
