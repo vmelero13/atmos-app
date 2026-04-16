@@ -1,3 +1,4 @@
+import sys
 import subprocess
 import platform
 from datetime import datetime
@@ -79,3 +80,10 @@ def formatear_texto(texto: str, color: str = "rojo", estilo: str = "negrita") ->
     codigo_estilo = estilos.get(estilo, "")
     
     return f"{codigo_estilo}{codigo_color}{texto}{RESET}"
+
+def borrar_lineas(n: int) -> None:
+    """Retrocede el cursor n líneas y borra el contenido."""
+    for _ in range(n):
+        sys.stdout.write("\033[F") # Mueve el cursor a la línea anterior
+        sys.stdout.write("\033[K") # Borra la línea actual
+    sys.stdout.flush()

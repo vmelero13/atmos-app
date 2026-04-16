@@ -1,8 +1,8 @@
 import sys
 import time
 import ui
-from utils import limpiar_pantalla, imprimir_encabezado_h2, formatear_texto
-from validation import validar_zona_registro, validar_duplicado, validar_fecha_registro
+from utils import limpiar_pantalla, imprimir_encabezado_h2, formatear_texto, borrar_lineas
+from validation import validar_duplicado, validar_fecha_registro
 from alerts import evaluar_alerta
 import io_manager as io
 from logger import configurar_logger, log_info, log_warning, log_error, log_critico
@@ -87,6 +87,9 @@ def ejecutar_registro() -> None:
         None
     """
     log_info("Iniciando proceso de captura de nueva medición.")
+    
+    limpiar_pantalla()
+    imprimir_encabezado_h2("NUEVO REGISTRO ATMOSFÉRICO")
     registro = ui.solicitar_medicion()
 
     if registro is None:
@@ -127,20 +130,18 @@ def ejecutar_registro() -> None:
 
                     if io.guardar_registro(registro, datos):
                         print(f"\n✅ Registro guardado correctamente.")
+                        time.sleep(1)
                         log_info(f"Registro persistido con éxito en data.json para la zona {zona}.")
                         break
                     else:
                         log_error("Error al intentar guardar el registro a través de io_manager.")
                         break
             elif opcion == "2":
-                log_info("El usuario eligió reintentar el registro.")
-                limpiar_pantalla()
-                imprimir_encabezado_h2("NUEVO REGISTRO ATMOSFÉRICO")
+                log_info("El usuario canceló guardar y reintenta el registro.")
                 ejecutar_registro()
-                break
             elif opcion == "X":
-                log_info("El usuario canceló el guardado y volvió al menú.")
-                iniciar_aplicacion()
+                log_info("El usuario canceló guardar y volvió al menú principal.")
+                return
         except KeyboardInterrupt:
             log_info("Operación cancelada por KeyboardInterrupt (Ctrl+C).")
             return
@@ -166,7 +167,7 @@ def consultar_por_zona() -> None:
 
             log_info(f"Consulta realizada para la zona: {zona_busqueda}")
             
-            # Filtramos los datos (convertimos a minúsculas para comparar sin errores)
+            # Filtramos los datos
             resultados = [r for r in datos if r["zona_registro"].lower() == zona_busqueda.lower()]
 
             if resultados:
@@ -186,20 +187,25 @@ def consultar_por_zona() -> None:
                         print(f"   ⚠️ {formatear_texto('Alertas')}:")
                         for alerta in r["mensajes"]:
                             print(f"        - {alerta}")
-                        print("\n")
-                    else:
-                        print("Sin Alertas.\n")
+                        print()
+     
             else:
-                print(f"\nℹ️  No se encontraron registros para la zona {zona}")
+                zona_error = formatear_texto(zona_busqueda.upper())
+                print(f"\nℹ️  No se encontraron registros para la zona {zona_error}")
 
-            # Preguntar al usuario qué desea hacer a continuación
-            opcion = ui.mostrar_submenu_consultas()
+            # Preguntar al usuario qué quiere hacer a continuación
+            while True: 
+                opcion = ui.mostrar_submenu_consultas()
             
-            if opcion == "X":
-                break # Sale del bucle de consulta y vuelve al menú principal
-            elif opcion != "1":
-                print(f"\n⚠️  {opcion} no es una opción válida.")
-                input("\nPresione Enter para intentarlo de nuevo...")
+                if opcion == "1":
+                    break
+                elif opcion == "X":
+                    return
+                
+                print(f"\n⚠️  '{opcion if opcion else ' '}' no es una opción válida.")
+                time.sleep(1)
+                borrar_lineas(8)
+
         except KeyboardInterrupt:
             log_info("Consulta cancelada por el usuario.")
             print("\n\n⚠️  Operación cancelada por el usuario.")
@@ -343,15 +349,11 @@ def iniciar_aplicacion() -> None:
 
         if opcion == "1":
             log_info("Navegando a: Registrar nueva medición")
-            limpiar_pantalla()
-            imprimir_encabezado_h2("NUEVO REGISTRO ATMOSFÉRICO")
             ejecutar_registro()
-            input("\nPresione Enter para continuar...")
         
         elif opcion == "2":
             log_info("Navegando a: Consulta por zona")
             consultar_por_zona()
-            input("\nPresione Enter para continuar...")
             
         elif opcion == "3":
             log_info("Navegando a: Histórico de registros")
@@ -363,8 +365,8 @@ def iniciar_aplicacion() -> None:
             sys.exit()
 
         else:
-            log_warning(f"Opción de menú inválida ingresada: {opcion}")
-            print(f"\n⚠️  {opcion} no es una opción válida.")
+            log_warning(f"Opción de menú inválida: {opcion}")
+            print(f"\n⚠️  '{opcion if opcion else ' '}' no es una opción válida.")
             input("\nPresione Enter para intentarlo de nuevo...")
 
 if __name__ == "__main__":
@@ -375,7 +377,7 @@ if __name__ == "__main__":
     try:
         ui.transicion_bienvenida()
         acceso_concedido = menu_acceso()
-
+        
         if acceso_concedido:
             iniciar_aplicacion()
         else:
